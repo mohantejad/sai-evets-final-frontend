@@ -27,6 +27,7 @@ const Page = () => {
   } = useForm<LoginFormInputs>();
 
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
+
     try {
       const response = await fetch("http://localhost:8000/auth/jwt/create/", {
         method: "POST",

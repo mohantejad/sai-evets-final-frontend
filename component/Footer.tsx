@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
     FaFacebookF,
     FaTwitter,
@@ -13,19 +14,19 @@ import {
             <h3 className="text-lg font-bold uppercase">About</h3>
             <ul className="mt-4 space-y-2">
               <li>
-                <a href="#" className="hover:underline">
+                <Link href="/about" className="hover:underline">
                   How it Works
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:underline">
+                <Link href="/about" className="hover:underline">
                   Our Mission
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:underline">
+                <Link href="/careers" className="hover:underline">
                   Careers
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -35,24 +36,23 @@ import {
             <h3 className="text-lg font-bold uppercase">Help</h3>
             <ul className="mt-4 space-y-2">
               <li>
-                <a href="#" className="hover:underline">
+                <Link href="/help" className="hover:underline">
                   Support
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:underline">
+                <Link href="/contact" className="hover:underline">
                   Contact Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:underline">
+                <Link href="/help" className="hover:underline">
                   FAQs
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
-  
-          {/* Social & Legal Section */}
+          
           <div>
             <h3 className="text-lg font-bold uppercase">Connect</h3>
             <div className="flex space-x-4 mt-4">

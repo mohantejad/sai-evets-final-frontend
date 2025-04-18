@@ -13,6 +13,7 @@ interface EventFormInputs {
   description: string;
   city: string;
   category: string;
+  mode: string;
   date: string;
   image: FileList;
 }
@@ -39,6 +40,8 @@ const categories = [
   "Food & Drink",
 ];
 
+const event_mode = ["Online", "Onsite", "Hybrid"];
+
 const CreateEventPage = () => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,24 +60,29 @@ const CreateEventPage = () => {
     formData.append("description", data.description);
     formData.append("city", data.city);
     formData.append("event_category", data.category);
+    formData.append("event_mode", data.mode);
     formData.append("date", data.date);
     if (data.image[0]) formData.append("image", data.image[0]);
-  
+
     try {
       const token = localStorage.getItem("accessToken");
-  
-      const response = await fetch("http://127.0.0.1:8000/api/event/events", {
+
+      if (!token) {
+        toast.error("No access token found. Please log in.");
+        return;
+      }
+
+      const response = await fetch("http://127.0.0.1:8000/api/event/events/", {
         method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: token ? { Authorization: `JWT ${token}` } : {},
         body: formData,
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
-        console.log(errorData)
         throw new Error(errorData?.detail || "Failed to create event");
       }
-  
+
       toast.success("Event created successfully!");
       reset();
       router.push("/user-profile");
@@ -87,7 +95,7 @@ const CreateEventPage = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };  
+  };
 
   return (
     <div className="flex items-center justify-center py-16">
@@ -146,6 +154,21 @@ const CreateEventPage = () => {
           </select>
           {errors.category && (
             <p className="text-red-500 text-sm">{errors.category.message}</p>
+          )}
+
+          <select
+            {...register("mode", { required: "Event Mode is required" })}
+            className="w-full px-4 py-2 border rounded-md"
+          >
+            <option value="">Event Mode</option>
+            {event_mode.map((mode) => (
+              <option key={mode} value={mode}>
+                {mode}
+              </option>
+            ))}
+          </select>
+          {errors.city && (
+            <p className="text-red-500 text-sm">{errors.city.message}</p>
           )}
 
           <input

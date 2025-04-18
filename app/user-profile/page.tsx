@@ -1,68 +1,96 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { UserType, EventType } from "@/types";
-import { RootState } from "@/redux/store";
 import EventCard from "@/component/utils/EventCard";
-
-
+import { store } from "@/redux/store";
+import { loginSuccess } from "@/redux/authSlice";
 
 const UserDetails = () => {
   const router = useRouter();
   const [events, setEvents] = useState<EventType[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, isAuthenticated } = useSelector(
-    (state: RootState) => state.auth
-  );
+  const [userId, setUserId] = useState<string>('')
+
   const [userDetails, setUserDetails] = useState<UserType>();
   const [editMode, setEditMode] = useState(false);
   const [updatedUser, setUpdatedUser] = useState<UserType>({
     id: 0,
-    username: "",
+    first_name: "",
+    last_name: "",
     email: "",
   });
 
   useEffect(() => {
-    if (!isAuthenticated || !user) {
-      router.push("/login");
-      return;
-    }
-
     const fetchUserProfile = async () => {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        const accessToken = localStorage.getItem("accessToken");
-        if (!accessToken) {
-          throw new Error("No access token found");
-        }
+        const userresponse = await fetch(
+          "http://localhost:8000/auth/users/me/",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `JWT ${accessToken}`,
+            },
+          }
+        );
 
-        const response = await fetch("http://localhost:8000/auth/users/me/", {
-          method: "GET",
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-        if (!response.ok) {
+        if (!userresponse.ok) {
           throw new Error("Failed to fetch user data");
         }
 
-        const { user, events } = await response.json();
-        setUserDetails(user);
-        setEvents(events);
+        if (userresponse.ok) {
+          const userData = await userresponse.json();
+          setUserDetails(userData);
+          store.dispatch(loginSuccess({ user: userData }));
+        }
+
       } catch (error: unknown) {
         if (error instanceof Error) {
-          toast.error(error?.message || "Error fetching profile");
+          toast.error(error.message || "Error fetching profile");
         } else {
           toast.error("An unknown error occurred");
         }
       } finally {
         setLoading(false);
       }
+
+      try {
+        const eventResponse = await fetch(
+          "http://localhost:8000/api/event/events/my_events/",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `JWT ${accessToken}`,
+            },
+          }
+        );
+
+        if (!eventResponse.ok) {
+          throw new Error("Failed to fetch user events");
+        }
+
+        const eventData = await eventResponse.json();
+        setEvents(eventData);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          toast.error(error.message || "Error fetching User events");
+        } else {
+          toast.error("An unknown error occurred");
+        }
+      }
     };
 
     fetchUserProfile();
-  }, [isAuthenticated, user, router]);
+  }, [router]);
 
   const handleUpdateProfile = async () => {
     try {
@@ -75,10 +103,11 @@ const UserDetails = () => {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `JWT ${accessToken}`,
         },
         body: JSON.stringify({
-          username: updatedUser.username || userDetails?.username,
+          first_name: updatedUser.first_name || userDetails?.first_name,
+          last_name: updatedUser.last_name || userDetails?.last_name,
           email: updatedUser.email || userDetails?.email,
         }),
       });
@@ -99,7 +128,6 @@ const UserDetails = () => {
         toast.error("An unexpected error occurred");
       }
     }
-    
   };
 
   if (loading)
@@ -116,15 +144,34 @@ const UserDetails = () => {
             {editMode ? (
               <div>
                 <label className="block font-medium text-gray-700">
-                  Username
+                  First Name
                 </label>
                 <input
                   type="text"
                   className="border p-2 rounded w-full mb-2"
-                  value={updatedUser.username}
-                  placeholder={userDetails?.username}
+                  value={updatedUser.first_name}
+                  placeholder={userDetails?.first_name}
                   onChange={(e) =>
-                    setUpdatedUser({ ...updatedUser, username: e.target.value })
+                    setUpdatedUser({
+                      ...updatedUser,
+                      first_name: e.target.value,
+                    })
+                  }
+                />
+
+                <label className="block font-medium text-gray-700">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  className="border p-2 rounded w-full mb-2"
+                  value={updatedUser.last_name}
+                  placeholder={userDetails?.last_name}
+                  onChange={(e) =>
+                    setUpdatedUser({
+                      ...updatedUser,
+                      last_name: e.target.value,
+                    })
                   }
                 />
 
@@ -133,7 +180,7 @@ const UserDetails = () => {
                   type="email"
                   className="border p-2 rounded w-full mb-2"
                   value={updatedUser.email}
-                  placeholder={userDetails?.email} // Placeholder with current email
+                  placeholder={userDetails?.email}
                   onChange={(e) =>
                     setUpdatedUser({ ...updatedUser, email: e.target.value })
                   }
@@ -158,13 +205,16 @@ const UserDetails = () => {
             ) : (
               <div>
                 <p>
-                  <strong>Username:</strong> {userDetails?.username}
+                  <strong>First Name:</strong> {userDetails?.first_name}
+                </p>
+                <p>
+                  <strong>Last Name:</strong> {userDetails?.last_name}
                 </p>
                 <p>
                   <strong>Email:</strong> {userDetails?.email}
                 </p>
                 <button
-                  className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+                  className="mt-2 px-4 py-2 bg-blue-500 text-white rounded cursor-pointer"
                   onClick={() => setEditMode(true)}
                 >
                   Edit Profile
@@ -177,7 +227,7 @@ const UserDetails = () => {
 
       <div className="mt-8">
         <h3 className="text-xl font-semibold text-[#004aad]">Your Events</h3>
-        {events.length === 0 ? (
+        {!events || events.length === 0 ? (
           <p className="mt-4 text-gray-500">
             You have not created any events yet.
           </p>
@@ -191,7 +241,7 @@ const UserDetails = () => {
       </div>
 
       <button
-        className="mt-4 px-4 py-2 bg-green-500 text-white rounded cursor-pointer"
+        className="mt-8 px-4 py-2 bg-green-500 text-white rounded cursor-pointer"
         onClick={() => router.push("/create-event")}
       >
         Create New Event

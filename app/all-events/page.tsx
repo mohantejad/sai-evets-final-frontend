@@ -16,6 +16,8 @@ const categories = [
   "Food & Drink",
 ];
 
+const eventModes = ["Online", "Onsite", "Hybrid"];
+
 const Page = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -32,6 +34,7 @@ const AllEventsContent = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const city = searchParams.get("city") || "";
   const searchKeyword = searchParams.get("search") || "";
+  const [selectedMode, setSelectedMode] = useState("");
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -42,7 +45,29 @@ const AllEventsContent = () => {
           apiUrl += `search=${encodeURIComponent(searchKeyword)}&`;
         if (selectedCategory)
           apiUrl += `event_category=${encodeURIComponent(selectedCategory)}&`;
-        if (selectedDate) apiUrl += `date=${encodeURIComponent(selectedDate)}`;
+        if (selectedMode)
+          apiUrl += `event_mode=${encodeURIComponent(selectedMode)}&`;
+
+        if (selectedDate) {
+          const today = new Date();
+          let targetDate = "";
+
+          if (selectedDate === "today") {
+            targetDate = today.toISOString().split("T")[0];
+          } else if (selectedDate === "tomorrow") {
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            targetDate = tomorrow.toISOString().split("T")[0];
+          } else if (selectedDate === "this_weekend") {
+            const day = today.getDay(); // 0 (Sun) - 6 (Sat)
+            const daysUntilSaturday = (6 - day + 7) % 7;
+            const saturday = new Date(today);
+            saturday.setDate(today.getDate() + daysUntilSaturday);
+            targetDate = saturday.toISOString().split("T")[0];
+          }
+
+          if (targetDate) apiUrl += `date=${encodeURIComponent(targetDate)}&`;
+        }
 
         const res = await fetch(apiUrl);
         const data = await res.json();
@@ -58,11 +83,14 @@ const AllEventsContent = () => {
   const resetFilters = () => {
     setSelectedCategory("");
     setSelectedDate("");
+    setSelectedMode("")
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h2 className="text-3xl font-bold mb-2">Events in {city || "Australia"}</h2>
+      <h2 className="text-3xl font-bold mb-2">
+        Events in {city || "Australia"}
+      </h2>
       <p className="text-gray-500 mb-6">
         Search for something you love or check out popular events in your area.
       </p>
@@ -102,7 +130,7 @@ const AllEventsContent = () => {
           </div>
 
           <div className="hidden md:block">
-            <h4 className="font-semibold mb-2 text-lg">Category</h4>
+            <h4 className="font-semibold text-lg">Category</h4>
             {categories.map((category) => (
               <p
                 key={category}
@@ -119,7 +147,7 @@ const AllEventsContent = () => {
           </div>
 
           <div className="hidden md:block">
-            <h4 className="font-semibold mb-2 text-lg">Date</h4>
+            <h4 className="font-semibold mt-2 text-lg">Date</h4>
             {["Today", "Tomorrow", "This Weekend"].map((date) => (
               <p
                 key={date}
@@ -135,8 +163,40 @@ const AllEventsContent = () => {
             ))}
           </div>
 
+          <div className="mb-4 w-full md:hidden">
+            <label className="block font-semibold text-lg">Mode</label>
+            <select
+              value={selectedMode}
+              onChange={(e) => setSelectedMode(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            >
+              <option value="">All Modes</option>
+              {eventModes.map((mode) => (
+                <option key={mode} value={mode}>
+                  {mode}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="hidden md:block">
+            <h4 className="font-semibold mt-2 text-lg">Mode</h4>
+            {eventModes.map((mode) => (
+              <p
+                key={mode}
+                className={`cursor-pointer py-1 ${
+                  selectedMode === mode
+                    ? "text-blue-600 font-bold"
+                    : "text-gray-600"
+                }`}
+                onClick={() => setSelectedMode(mode)}
+              >
+                {mode}
+              </p>
+            ))}
+          </div>
+
           <button
-            className="p-2 bg-gray-300 text-black rounded-md w-full"
+            className="p-2 bg-gray-300 text-black rounded-md w-full mt-4"
             onClick={resetFilters}
           >
             Reset Filters

@@ -12,7 +12,7 @@ interface SignupFormInputs {
   last_name: string;
   email: string;
   password: string;
-  confirmPassword: string;
+  re_password: string;
 }
 
 const Signup = () => {
@@ -28,7 +28,7 @@ const Signup = () => {
 
   const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
     try {
-      const response = await fetch("localhost:8000/auth/users/", {
+      const response = await fetch("http://localhost:8000/auth/users/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -43,6 +43,7 @@ const Signup = () => {
       router.push("/login");
     } catch (error: unknown) {
           if (error instanceof Error) {
+            console.log(error)
             toast.error(error?.message || "Signup failed! Please try again.");
           } else {
             toast.error("An unknown error occurred");
@@ -135,20 +136,20 @@ const Signup = () => {
           </div>
 
           <div className="flex flex-col space-y-1">
-            <label htmlFor="confirmPassword" className="text-[#004aad]/90">Confirm Password</label>
+            <label htmlFor="re_password" className="text-[#004aad]/90">Confirm Password</label>
             <input
-              id="confirmPassword"
+              id="re_password"
               type="password"
-              {...register("confirmPassword", {
+              {...register("re_password", {
                 required: "Please confirm your password",
                 validate: (value) => value === watch("password") || "Passwords do not match",
               })}
               className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                errors.confirmPassword ? "border-red-500 focus:ring-red-500" : "border-[#004aad]/90 focus:ring-[#004aad]"
+                errors.re_password ? "border-red-500 focus:ring-red-500" : "border-[#004aad]/90 focus:ring-[#004aad]"
               }`}
               placeholder="Confirm your password"
             />
-            {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>}
+            {errors.re_password && <p className="text-red-500 text-sm">{errors.re_password.message}</p>}
           </div>
 
           <div className="flex justify-center mt-6 pb-8">

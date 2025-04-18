@@ -43,7 +43,7 @@ const Carousel = () => {
         pagination={{ clickable: true }}
         autoplay={{ delay: 5000 }}
         loop
-        className="w-full h-[400px] rounded-xl overflow-hidden"
+        className="w-full h-[400px] rounded-xl overflow-hidden text-white"
       >
         {slides.map((slide) => (
           <SwiperSlide key={slide.id} className="relative">
@@ -51,7 +51,7 @@ const Carousel = () => {
               src={slide.image}
               alt={slide.title}
               layout="fill"
-              objectFit="cover"
+              objectFit="fit"
             />
           </SwiperSlide>
         ))}
