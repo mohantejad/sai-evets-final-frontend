@@ -16,4 +16,6 @@ export interface EventType {
   image: string;
   event_category: string;
   price: number;
+  likes: number;
+  liked: boolean
 }

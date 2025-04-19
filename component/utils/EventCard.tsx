@@ -6,7 +6,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
-import { FaTrash } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaTrash } from "react-icons/fa";
 
 interface EventCardProps {
   event: EventType;
@@ -23,8 +23,12 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
       : event.image || "/images/default-event.jpg";
   const [userName, setUserName] = useState<string>("");
 
+  const [likes, setLikes] = useState<number>(event.likes || 0);
+  const [liked, setLiked] = useState<boolean>(event.liked || false);
+
   const [isDeleting, setIsDeleting] = useState(false);
   const user = localStorage.getItem("user");
+  
   useEffect(() => {
     if (user) {
       try {
@@ -32,11 +36,17 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
         if (parsedUser.first_name) {
           setUserName(parsedUser.first_name);
         }
+        if (event.liked && Array.isArray(event.liked)) {
+          setLiked(event.liked.includes(parsedUser.id));
+        }
       } catch (error) {
         console.error("Error parsing user data from localStorage", error);
       }
     }
-  }, [user]);
+    if (event.likes !== undefined) {
+      setLikes(event.likes);
+    }
+  }, [user, event]);
 
   const handleDeleteEvent = async (eventId: number) => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
@@ -75,6 +85,45 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
       }
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const [liking, setLiking] = useState(false);
+
+  const accessToken = localStorage.getItem("accessToken");
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (liking) return;
+    setLiking(true);
+    try {
+      if (accessToken) {
+        const headers: Record<string, string> = {};
+
+        if (accessToken) {
+          headers["Authorization"] = `JWT ${accessToken}`;
+        }
+
+        const res = await fetch(
+          `http://127.0.0.1:8000/api/event/events/${event.id}/like/`,
+          {
+            method: "POST",
+            headers
+          },
+        );
+  
+        if (res.ok) {
+          const data = await res.json();
+          setLikes(data.likes);
+          setLiked(data.liked);
+        }
+      } else {
+        toast.info('Please login to like this event')
+      }
+    } catch (err) {
+      console.error("Failed to like event", err);
+    } finally {
+      setLiking(false);
     }
   };
 
@@ -122,6 +171,18 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
                   <FaTrash size={20} />
                 </button>
               )}
+              <button
+                onClick={handleLike}
+                className="text-[#004aad] hover:text-red-400 cursor-pointer mt-1 flex items-center"
+                title="Like Event"
+              >
+                {liked ? (
+                  <FaHeart size={18} color="red" />
+                ) : (
+                  <FaRegHeart size={18} />
+                )}
+                <span className="ml-1 text-sm text-[#004aad]">{likes}</span>
+              </button>
             </div>
           </div>
         </div>

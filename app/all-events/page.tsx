@@ -35,6 +35,7 @@ const AllEventsContent = () => {
   const city = searchParams.get("city") || "";
   const searchKeyword = searchParams.get("search") || "";
   const [selectedMode, setSelectedMode] = useState("");
+  const accessToken = localStorage.getItem("accessToken");
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -59,7 +60,7 @@ const AllEventsContent = () => {
             tomorrow.setDate(today.getDate() + 1);
             targetDate = tomorrow.toISOString().split("T")[0];
           } else if (selectedDate === "this_weekend") {
-            const day = today.getDay(); // 0 (Sun) - 6 (Sat)
+            const day = today.getDay();
             const daysUntilSaturday = (6 - day + 7) % 7;
             const saturday = new Date(today);
             saturday.setDate(today.getDate() + daysUntilSaturday);
@@ -69,10 +70,17 @@ const AllEventsContent = () => {
           if (targetDate) apiUrl += `date=${encodeURIComponent(targetDate)}&`;
         }
 
-        const res = await fetch(apiUrl);
+        const headers: Record<string, string> = {};
+
+        if (accessToken) {
+          headers["Authorization"] = `JWT ${accessToken}`;
+        }
+
+        const res = await fetch(apiUrl, { headers });
         const data = await res.json();
 
         setEvents(data);
+        
       } catch (error) {
         console.error("Error fetching events:", error);
       }
@@ -83,7 +91,7 @@ const AllEventsContent = () => {
   const resetFilters = () => {
     setSelectedCategory("");
     setSelectedDate("");
-    setSelectedMode("")
+    setSelectedMode("");
   };
 
   return (

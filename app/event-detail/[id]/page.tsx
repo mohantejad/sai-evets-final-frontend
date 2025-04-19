@@ -71,6 +71,12 @@ const EventDetail = () => {
                 </span>{" "}
                 {event.created_by}
               </p>
+              <p className="text-lg">
+                <span className="font-semibold text-gray-800">
+                  Number of Likes:
+                </span>{" "}
+                {event.likes}
+              </p>
             </div>
 
             <div className="mt-6 flex flex-col">
